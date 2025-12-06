@@ -73,15 +73,24 @@
     .date-btn.holiday { border-color: #e74c3c; color: #e74c3c; }
     .date-btn.holiday.selected { background: #e74c3c; color: white; border-color: #c0392b; }
     /* 行動版簡易調整 */
-    @media (max-width: 900px) {
-      .main-content { grid-template-columns: 1fr; }
-      .booking-form { position: relative; top: 0; max-height: none; }
-      .calendar-grid { grid-template-columns: repeat(3, 1fr) 100px; }
-    }
-    @media (max-width: 600px) {
-      .calendar-grid { grid-template-columns: repeat(2, 1fr) 100px; }
-      .day-cell { min-height: 160px; }
-      .time-table td { font-size: 9px; }
+@media (max-width: 900px) {
+  .main-content { grid-template-columns: 1fr; }
+  .booking-form { position: relative; top: 0; max-height: none; }
+  .calendar-grid { grid-template-columns: repeat(3, 1fr) 80px; }
+  .day-cell { min-height: 160px; }
+}
+
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  .container { border-radius: 8px; }
+  .header { padding: 18px; }
+  .main-content { padding: 12px; gap: 12px; }
+  .calendar-grid { grid-template-columns: repeat(2, 1fr) 70px; }
+  .day-cell { min-height: 140px; padding: 6px; }
+  .day-number { font-size: 13px; }
+  .time-table td { font-size: 9px; padding: 2px; }
+  .time-table .time-label { width: 42px; }
+}
     }
   </style>
 

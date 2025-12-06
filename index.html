@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>錄音室預約系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 95%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* 預約表單樣式 */
+        .booking-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .time-slot {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-slot input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .time-slot label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            margin-top: 5px;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        /* 撞期顯示區域 */
+        .conflict-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ffebee;
+            border-radius: 6px;
+            border: 2px solid #e57373;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .conflict-section h3 {
+            font-size: 14px;
+            color: #c62828;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .conflict-item {
+            font-size: 12px;
+            color: #c62828;
+            padding: 6px;
+            margin-bottom: 5px;
+            background: #ffcdd2;
+            border-radius: 4px;
+            border-left: 3px solid #d32f2f;
+            font-weight: 500;
+        }
+
+        /* 月曆樣式 */
+        .calendar-section {
+            background: white;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+        }
+
+        .current-month {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr) 100px;
+            gap: 2px;
+            background: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .day-cell {
+            background: white;
+            min-height: 200px;
+            padding: 8px;
+            border: 1px solid #eee;
+            position: relative;
+        }
+
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        /* 時段表格 */
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .time-table td {
+            padding: 3px;
+            border: 1px solid #e0e0e0;
+            font-size: 10px;
+            text-align: center;
+            height: 25px;
+            background: white;
+        }
+
+        .time-table .time-label {
+            background: #f5f5f5;
+            font-weight: bold;
+            width: 50px;
+            font-size: 9px;
+        }
+        
+        .time-table .time-label.header {
+            background: #4B7970;
+            color: white;
+        }
+
+        .time-table .room-cell {
+            width: 25%;
+        }
+
+        .time-table .room-cell.booked {
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .time-table .room-cell.booked:hover {
+            opacity: 0.8;
+        }
+
+        .today {
+            background: #e8f4f8 !important;
+            border: 2px solid #3498db !important;
+        }
+
+        .holiday {
+            background: #ffcdd2 !important;
+        }
+
+        /* 週六欄特殊樣式 */
+        .day-cell.saturday {
+            min-width: 100px;
+            max-width: 120px;
+            font-size: 11px;
+        }
+
+        .saturday-bookings {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .saturday-booking-item {
+            padding: 3px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            line-height: 1.2;
+            word-break: break-word;
+            cursor: pointer;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .saturday-booking-item:hover {
+            opacity: 0.8;
+        }
+
+        .other-month {
+            background: #bdbdbd;
+            color: #616161;
+        }
+
+        .other-month .day-number {
+            color: #616161;
+        }
+
+        /* 訊息提示 */
+        .alert {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            display: none;
+            font-size: 12px;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        /* 編輯/刪除按鈕 */
+        .booking-actions {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            display: none;
+            gap: 3px;
+        }
+
+        .room-cell.booked:hover .booking-actions {
+            display: flex;
+        }
+
+        .action-btn {
+            width: 16px;
+            height: 16px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 11px;
+            line-height: 1;
+            color: white;
+        }
+
+        .edit-btn {
+            background: rgba(52, 152, 219, 0.8);
+        }
+
+        .delete-btn {
+            background: rgba(231, 76, 60, 0.8);
+        }
+
+        /* 重複預約選項 */
+        .repeat-options {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .repeat-options.show {
+            display: block;
+        }
+
+        .date-selection-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .date-btn {
+            padding: 8px 12px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+
+        .date-btn:hover {
+            background: #e8f4f8;
+        }
+
+        .date-btn.selected {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .date-btn.holiday {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .date-btn.holiday.selected {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+    </style>
+    <!-- InstantDB SDK - 使用 ES Module 方式載入 -->
+    <script type="module">
+        // 動態載入 InstantDB Core SDK（使用 esm.sh CDN）
+        import { init, id, i } from 'https://esm.sh/@instantdb/core@latest';
+        
+        // 定義 Schema（根據您的需求）
+        const schema = i.schema({
+            entities: {
+                "$files": i.entity({
+                    "path": i.string().unique().indexed(),
+                    "url": i.string().optional(),
+                }),
+                "$users": i.entity({
+                    "email": i.string().unique().indexed().optional(),
+                    "imageURL": i.string().optional(),
+                    "type": i.string().optional(),
+                }),
+                // 錄音室預訂資料
+                "REC_RESERVE_DB": i.entity({
+                    "program": i.string(),
+                    "date": i.string().indexed(),
+                    "room": i.string(),
+                    "time": i.string(),
+                    "operator": i.string(),
+                    "memo": i.string().optional(),
+                    "recorder": i.string().optional(),
+                    "isRepeat": i.boolean(),
+                    "weekday": i.number().optional(),
+                    "groupId": i.string().optional(),
+                    "createdAt": i.string(),
+                }),
+                // 香港公眾假期
+                "HK_PUB_HOLIDAY": i.entity({
+                    "name": i.string(),
+                    "date": i.string().indexed(),
+                }),
+            },
+            links: {
+                "$usersLinkedPrimaryUser": {
+                    "forward": {
+                        "on": "$users",
+                        "has": "one",
+                        "label": "linkedPrimaryUser",
+                        "onDelete": "cascade"
+                    },
+                    "reverse": {
+                        "on": "$users",
+                        "has": "many",
+                        "label": "linkedGuestUsers"
+                    }
+                }
+            },
+            rooms: {}
+        });
+        
+        // 將 InstantDB 暴露到全局
+        window.InstantDB = { init, id, schema };
+        console.log('✅ InstantDB SDK 已載入');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ 錄音室預約系統</h1>
+            <p>歡迎使用錄音室預約系統，請填寫以下表單進行預約</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 預約表單 -->
+            <div class="booking-form">
+                <h2 style="margin-bottom: 15px; color: #2c3e50; font-size: 18px;">新增預約</h2>
+                
+                <div id="alert-container"></div>
+
+                <form id="bookingForm">
+                    <input type="hidden" id="editingId" value="">
+                    
+                    <div class="form-group">
+                        <label>節目名稱 <span class="required">*</span></label>
+                        <div style="display: flex; gap: 5px; align-items: stretch;">
+                            <input type="text" id="program" name="program" required placeholder="例如：FH, DY" style="flex: 1;" oninput="updateProgramColorPreview()">
+                            <div id="programColorPreview" style="width: 40px; border: 2px solid #ddd; border-radius: 6px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: help;" title="節目顯示顏色"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>預約類型</label>
+                        <select id="bookingType" name="bookingType" onchange="toggleRepeatOptions()">
+                            <option value="single">單次預約</option>
+                            <option value="repeat">每週重複</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="singleDateGroup">
+                        <label>預約日期 <span class="required">*</span></label>
+                        <input type="date" id="bookingDate" name="bookingDate" required>
+                    </div>
+
+                    <div class="form-group" id="repeatGroup" style="display: none;">
+                        <label>每週 <span class="required">*</span></label>
+                        <select id="weekday" name="weekday">
+                            <option value="">請選擇</option>
+                            <option value="1">星期一</option>
+                            <option value="2">星期二</option>
+                            <option value="3">星期三</option>
+                            <option value="4">星期四</option>
+                            <option value="5">星期五</option>
+                            <option value="6">星期六</option>
+                        </select>
+                    </div>
+
+                    <div class="repeat-options" id="repeatOptions">
+                        <div class="form-group">
+                            <label>選擇日期 <span class="required">*</span></label>
+                            <div id="dateSelectionContainer" class="date-selection-buttons">
+                                <p style="font-size: 12px; color: #7f8c8d;">請先選擇「每週」的星期</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>錄音室 <span class="required">*</span></label>
+                        <select id="room" name="room" required>
+                            <option value="">請選擇</option>
+                            <option value="A">A室</option>
+                            <option value="B">B室</option>
+                            <option value="C">C室</option>
+                            <option value="D">D室</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>時段 <span class="required">*</span></label>
+                        <div class="time-slots">
+                            <div class="time-slot">
+                                <input type="checkbox" id="time0900" name="time" value="0900">
+                                <label for="time0900">09:00</label>
+                            </div>
+                            <div class="time-slot">
+                                <input type="checkbox" id="time1030" name="time" value="1030">
+                                <label for="time1030">10:30</label>
+                            </div>
+                            <div class="time-slot">
+                                <input type="checkbox" id="time1300" name="time" value="1300">
+                                <label for="time1300">13:00</label>
+                            </div>
+                            <div class="time-slot">
+                                <input type="checkbox" id="time1530" name="time" value="1530">
+                                <label for="time1530">15:30</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>音控員 <span class="required">*</span></label>
+                        <input type="text" id="operator" name="operator" required placeholder="音控員姓名或簡稱">
+                    </div>
+
+                    <div class="form-group">
+                        <label>備註</label>
+                        <textarea id="memo" name="memo" rows="2" placeholder="特殊需求或備註（選填）"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>記錄者</label>
+                        <input type="text" id="recorder" name="recorder" placeholder="您的姓名或簡稱">
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">提交預約</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()" style="display: none;" id="cancelBtn">取消編輯</button>
+                </form>
+
+                <!-- 撞期顯示區域 -->
+                <div class="conflict-section" id="conflictSection" style="display: none;">
+                    <h3>⚠️ 撞期提示</h3>
+                    <div id="conflictList"></div>
+                </div>
+            </div>
+
+            <!-- 月曆顯示 -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="current-month" id="current-month"></div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="monthSelector" style="font-size: 14px; color: #2c3e50;">選擇月份：</label>
+                            <input type="month" id="monthSelector" style="padding: 8px; border: 2px solid #3498db; border-radius: 6px; font-size: 14px; cursor: pointer;" onchange="changeMonth()" disabled>
+                            <button type="button" id="monthLockBtn" onclick="toggleMonthLock()" style="padding: 6px 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">🔒 解鎖</button>
+                            <button type="button" onclick="reloadBookings()" style="padding: 6px 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" title="重新載入所有預約資料">🔄 重新載入</button>
+                            <div id="monthPasswordContainer" style="display: none; align-items: center; gap: 5px;">
+                                <input type="password" id="monthPassword" placeholder="輸入密碼" style="padding: 6px; border: 2px solid #3498db; border-radius: 4px; font-size: 12px; width: 120px;" onkeypress="if(event.key==='Enter') unlockMonth()">
+                                <button type="button" onclick="unlockMonth()" style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">確認</button>
+                                <button type="button" onclick="cancelUnlock()" style="padding: 6px 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e74c3c;"></div>
+                            <span>A室</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f39c12;"></div>
+                            <span>B室</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #27ae60;"></div>
+                            <span>C室</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8e44ad;"></div>
+                            <span>D室</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- 動態生成月曆 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 資料儲存
+        const STORAGE_KEY = 'recording_studio_bookings'; // 保留作為備用快取
+        const TIME_SLOTS = ['0900', '1030', '1300', '1530'];
+        const ROOMS = ['A', 'B', 'C', 'D'];
+        
+        // ============================================
+        // InstantDB 設定
+        // ============================================
+        const INSTANTDB_APP_ID = 'd57ba3c8-bc1b-461d-b4e4-b9f4e75065c5';
+        const INSTANTDB_ENABLED = true; // ⬅️ 設為 true 啟用 InstantDB
+        
+        // InstantDB 初始化
+        let db = null;
+        
+        // InstantDB 資料快取（用於 subscribeQuery）
+        let instantDBBookings = [];
+        let instantDBHolidays = [];
+        
+        // 等待 InstantDB SDK 載入並初始化
+        let initAttempts = 0;
+        const MAX_INIT_ATTEMPTS = 50; // 最多嘗試 5 秒（50 * 100ms）
+        
+        function initInstantDB() {
+            if (!INSTANTDB_ENABLED) {
+                console.log('ℹ️ InstantDB 已停用，使用 localStorage');
+                return;
+            }
+            
+            initAttempts++;
+            
+            // 檢查 InstantDB 是否已載入
+            if (typeof window !== 'undefined' && window.InstantDB && window.InstantDB.init) {
+                try {
+                    db = window.InstantDB.init({ 
+                        appId: INSTANTDB_APP_ID,
+                        schema: window.InstantDB.schema
+                    });
+                    console.log('✅ InstantDB 初始化成功');
+                    console.log('✅ db 物件:', db);
+                    console.log('✅ db 可用方法:', Object.keys(db || {}));
+                    
+                    // 訂閱預約資料（根據 InstantDB 範例，使用 subscribeQuery）
+                    if (db.subscribeQuery) {
+                        db.subscribeQuery({ REC_RESERVE_DB: {} }, (resp) => {
+                            if (resp.error) {
+                                console.error('❌ InstantDB 訂閱預約資料錯誤:', resp.error.message);
+                                return;
+                            }
+                            if (resp.data) {
+                                instantDBBookings = resp.data.REC_RESERVE_DB || [];
+                                console.log('✅ InstantDB 預約資料已更新:', instantDBBookings.length, '筆');
+                                // 更新 localStorage 作為備用
+                                localStorage.setItem(STORAGE_KEY, JSON.stringify(instantDBBookings));
+                                // 重新生成日曆
+                                if (document.querySelector('.calendar-grid')) {
+                                    generateCalendar();
+                                }
+                            }
+                        });
+                        
+                        // 訂閱假期資料
+                        db.subscribeQuery({ HK_PUB_HOLIDAY: {} }, (resp) => {
+                            if (resp.error) {
+                                console.error('❌ InstantDB 訂閱假期資料錯誤:', resp.error.message);
+                                return;
+                            }
+                            if (resp.data) {
+                                const holidays = resp.data.HK_PUB_HOLIDAY || [];
+                                instantDBHolidays = holidays.map(item => {
+                                    if (item.date) {
+                                        if (typeof item.date === 'string' && item.date.includes('T')) {
+                                            return item.date.split('T')[0];
+                                        } else if (typeof item.date === 'string') {
+                                            const dateMatch = item.date.match(/^(\d{4}-\d{2}-\d{2})/);
+                                            return dateMatch ? dateMatch[1] : item.date;
+                                        }
+                                    }
+                                    return null;
+                                }).filter(date => date);
+                                HK_HOLIDAYS = instantDBHolidays;
+                                console.log('✅ InstantDB 假期資料已更新:', HK_HOLIDAYS.length, '個假期');
+                                // 更新 localStorage 作為備用
+                                localStorage.setItem(HOLIDAYS_STORAGE_KEY, JSON.stringify({
+                                    holidays: HK_HOLIDAYS,
+                                    timestamp: Date.now()
+                                }));
+                                // 重新生成日曆
+                                if (document.querySelector('.calendar-grid')) {
+                                    generateCalendar();
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('❌ InstantDB 初始化失敗:', error);
+                    console.error('❌ 錯誤詳情:', error.message, error.stack);
+                    db = null;
+                }
+            } else {
+                // 如果 SDK 還沒載入，等待一下再試
+                if (initAttempts < MAX_INIT_ATTEMPTS) {
+                    setTimeout(initInstantDB, 100);
+                } else {
+                    console.error('❌ InstantDB SDK 載入超時，請檢查：');
+                    console.error('   1. 網路連線是否正常');
+                    console.error('   2. CDN 連結是否正確（使用 esm.sh）');
+                    console.error('   3. 瀏覽器是否支援 ES Module');
+                    console.warn('⚠️ 將使用 localStorage 作為備用');
+                }
+            }
+        }
+        
+        // 開始初始化（等待 DOM 和 SDK 載入後）
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                // 等待 SDK 載入
+                setTimeout(initInstantDB, 500);
+            });
+        } else {
+            // 等待 SDK 載入
+            setTimeout(initInstantDB, 500);
+        }
+        
+        // ============================================
+        // Google Sheets API（保留作為備用）
+        // ============================================
+        // Google Sheet 預約資料 API 網址
+        // 設定步驟：
+        // 1. 在 Google Sheets 中設定 Apps Script（參考「預約資料API設定說明.md」）
+        // 2. 部署為「網頁應用程式」（權限：任何人）
+        // 3. 複製部署後的網址，貼到下面的單引號中
+        // 例如：const BOOKINGS_API_URL = 'https://script.google.com/macros/s/AKfycby.../exec';
+        const BOOKINGS_API_URL = ''; // ⬅️ 已改用 InstantDB 或 localStorage
+        
+        // 快取機制（提升效能）
+        let bookingsCache = null;
+        let cacheTimestamp = 0;
+        const CACHE_DURATION = 30000; // 30秒快取
+        
+        // 節目顏色對應（最多30個節目，不使用藍色系列，預留給工程部）
+        const PROGRAM_COLORS = [
+            '#e74c3c', '#f39c12', '#27ae60', '#8e44ad', '#e67e22',
+            '#1abc9c', '#9b59b6', '#34495e', '#16a085', '#d35400',
+            '#c0392b', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6',
+            '#1abc9c', '#16a085', '#d35400', '#c0392b', '#8e44ad',
+            '#34495e', '#e67e22', '#27ae60', '#f39c12', '#e74c3c',
+            '#9b59b6', '#1abc9c', '#16a085', '#d35400', '#c0392b'
+        ];
+        
+        // 香港公眾假期（從 Google Sheet 讀取）
+        let HK_HOLIDAYS = [];
+        const HOLIDAYS_STORAGE_KEY = 'hk_holidays_cache';
+        const HOLIDAYS_CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24小時快取
+        
+        // ============================================
+        // ⚠️ 暫時停用 Google Sheets 整合，使用 localStorage 進行測試
+        // ============================================
+        // Google Sheet 假期資料 API 網址
+        // 設定步驟：
+        // 1. 在 Google Sheets 中設定 Apps Script（參考「設定步驟詳細說明.md」）
+        // 2. 部署為「網頁應用程式」（權限：任何人）
+        // 3. 複製部署後的網址，貼到下面的單引號中
+        // 例如：const HOLIDAYS_API_URL = 'https://script.google.com/macros/s/AKfycby.../exec';
+        const HOLIDAYS_API_URL = ''; // ⬅️ 暫時設為空字串，使用 localStorage 進行測試
+        
+        // 從 InstantDB 或 Google Sheet 載入假期資料
+        async function loadHolidaysFromSheet() {
+            // 如果使用 InstantDB
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db) {
+                try {
+                    // 查詢 InstantDB（使用 InstantDB 的實際 API）
+                    let holidays = [];
+                    
+                    // 方法 1：使用 query（異步查詢）
+                    if (db.query) {
+                        const result = await db.query({ HK_PUB_HOLIDAY: {} });
+                        holidays = result?.HK_PUB_HOLIDAY || [];
+                    }
+                    // 方法 2：使用 useQuery（如果可用，但需要處理響應式）
+                    else if (db.useQuery) {
+                        const { data } = db.useQuery({ HK_PUB_HOLIDAY: {} });
+                        holidays = data?.HK_PUB_HOLIDAY || [];
+                    }
+                    // 方法 3：使用 fetch（如果 InstantDB 提供 REST API）
+                    else {
+                        console.warn('⚠️ InstantDB query API 未確認，使用 localStorage');
+                        const cached = localStorage.getItem(HOLIDAYS_STORAGE_KEY);
+                        if (cached) {
+                            const data = JSON.parse(cached);
+                            HK_HOLIDAYS = data.holidays || [];
+                            console.log('從快取載入假期資料:', HK_HOLIDAYS.length, '個假期');
+                            return;
+                        }
+                        HK_HOLIDAYS = [];
+                        return;
+                    }
+                    
+                    // 將日期格式化為 YYYY-MM-DD
+                    HK_HOLIDAYS = holidays.map(item => {
+                        if (item.date) {
+                            if (typeof item.date === 'string' && item.date.includes('T')) {
+                                return item.date.split('T')[0];
+                            } else if (item.date instanceof Date) {
+                                return formatDate(item.date);
+                            } else if (typeof item.date === 'string') {
+                                const dateMatch = item.date.match(/^(\d{4}-\d{2}-\d{2})/);
+                                return dateMatch ? dateMatch[1] : item.date;
+                            }
+                        }
+                        return null;
+                    }).filter(date => date);
+                    
+                    console.log('從 InstantDB 載入假期資料:', HK_HOLIDAYS.length, '個假期');
+                    console.log('假期列表:', HK_HOLIDAYS);
+                    
+                    // 儲存到快取
+                    localStorage.setItem(HOLIDAYS_STORAGE_KEY, JSON.stringify({
+                        holidays: HK_HOLIDAYS,
+                        timestamp: Date.now()
+                    }));
+                    
+                    // 如果月曆已經生成，重新生成以顯示假期
+                    if (document.querySelector('.calendar-grid')) {
+                        await generateCalendar();
+                    }
+                    
+                    return;
+                } catch (error) {
+                    console.error('❌ 從 InstantDB 載入假期資料失敗:', error);
+                    // 如果 InstantDB 失敗，嘗試從快取讀取
+                    loadHolidaysFromCache();
+                    return;
+                }
+            }
+            
+            // 如果還沒設定 API URL，先從快取讀取
+            if (!HOLIDAYS_API_URL) {
+                const cached = localStorage.getItem(HOLIDAYS_STORAGE_KEY);
+                if (cached) {
+                    try {
+                        const data = JSON.parse(cached);
+                        // 檢查快取是否過期
+                        if (Date.now() - data.timestamp < HOLIDAYS_CACHE_EXPIRY) {
+                            HK_HOLIDAYS = data.holidays || [];
+                            console.log('從快取載入假期資料:', HK_HOLIDAYS.length, '個假期');
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('讀取假期快取失敗:', e);
+                    }
+                }
+                // 如果沒有快取，使用預設空陣列
+                HK_HOLIDAYS = [];
+                console.log('尚未設定假期 API，使用空假期列表');
+                console.log('💡 提示：如需載入假期資料，請：');
+                console.log('   1. 在 InstantDB Dashboard 中手動輸入假期資料到 HK_PUB_HOLIDAY 表');
+                console.log('   2. 或設定 HOLIDAYS_API_URL 使用 Google Sheets API');
+                return;
+            }
+            
+            try {
+                const response = await fetch(HOLIDAYS_API_URL + '?action=getHolidays');
+                const text = await response.text();
+                console.log('API 回應原始資料:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('解析 JSON 失敗:', e, '原始回應:', text);
+                    loadHolidaysFromCache();
+                    return;
+                }
+                
+                console.log('解析後的資料:', data);
+                
+                if (data.success && Array.isArray(data.holidays)) {
+                    // 將日期格式化為 YYYY-MM-DD
+                    HK_HOLIDAYS = data.holidays.map(item => {
+                        // item.date 應該是 YYYY-MM-DD 格式的字串（從 Apps Script 返回）
+                        if (typeof item.date === 'string' && item.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            return item.date;
+                        } else if (typeof item.date === 'string') {
+                            // 嘗試解析其他格式的字串
+                            const d = new Date(item.date);
+                            if (!isNaN(d.getTime())) {
+                                return formatDate(d);
+                            }
+                        }
+                        return null;
+                    }).filter(date => date); // 過濾無效日期
+                    
+                    console.log('處理後的假期列表:', HK_HOLIDAYS);
+                    
+                    // 儲存到快取
+                    localStorage.setItem(HOLIDAYS_STORAGE_KEY, JSON.stringify({
+                        holidays: HK_HOLIDAYS,
+                        timestamp: Date.now()
+                    }));
+                    
+                    console.log('從 Google Sheet 載入假期資料:', HK_HOLIDAYS.length, '個假期');
+                    
+                    // 重新生成月曆以顯示假期
+                    await generateCalendar();
+                } else {
+                    console.error('假期資料格式錯誤:', data);
+                    // 嘗試從快取讀取
+                    loadHolidaysFromCache();
+                }
+            } catch (error) {
+                console.error('載入假期資料失敗:', error);
+                // 嘗試從快取讀取
+                loadHolidaysFromCache();
+            }
+        }
+        
+        // 從快取載入假期
+        function loadHolidaysFromCache() {
+            const cached = localStorage.getItem(HOLIDAYS_STORAGE_KEY);
+            if (cached) {
+                try {
+                    const data = JSON.parse(cached);
+                    HK_HOLIDAYS = data.holidays || [];
+                    console.log('從快取載入假期資料:', HK_HOLIDAYS.length, '個假期');
+                } catch (e) {
+                    console.error('讀取假期快取失敗:', e);
+                    HK_HOLIDAYS = [];
+                }
+            } else {
+                HK_HOLIDAYS = [];
+            }
+        }
+
+        // 節目顏色儲存
+        const PROGRAM_COLOR_STORAGE_KEY = 'program_colors';
+        
+        // 取得或設定節目顏色
+        function getProgramColor(program) {
+            if (!program || program.trim() === '') {
+                return '#f5f5f5';
+            }
+            
+            // 維修保養使用特殊顏色
+            if (program === '維修保養') {
+                return '#4C8DDC';
+            }
+            
+            // 從 localStorage 讀取節目顏色對應
+            const colorMap = JSON.parse(localStorage.getItem(PROGRAM_COLOR_STORAGE_KEY) || '{}');
+            
+            if (colorMap[program]) {
+                return colorMap[program];
+            }
+            
+            // 如果沒有，分配新顏色
+            const programs = Object.keys(colorMap);
+            const usedColors = Object.values(colorMap);
+            let newColor = PROGRAM_COLORS.find(c => !usedColors.includes(c));
+            
+            if (!newColor) {
+                // 如果所有顏色都用完，循環使用
+                newColor = PROGRAM_COLORS[programs.length % PROGRAM_COLORS.length];
+            }
+            
+            // 儲存新顏色
+            colorMap[program] = newColor;
+            localStorage.setItem(PROGRAM_COLOR_STORAGE_KEY, JSON.stringify(colorMap));
+            
+            return newColor;
+        }
+        
+        // 更新節目顏色預覽
+        function updateProgramColorPreview() {
+            const program = document.getElementById('program').value.trim();
+            const preview = document.getElementById('programColorPreview');
+            
+            if (program) {
+                const color = getProgramColor(program);
+                preview.style.background = color;
+                preview.style.borderColor = color;
+                preview.title = `節目「${program}」將使用此顏色顯示`;
+            } else {
+                preview.style.background = '#f5f5f5';
+                preview.style.borderColor = '#ddd';
+                preview.title = '節目顯示顏色';
+            }
+        }
+
+        // 取得所有預約資料（異步）
+        async function getBookings() {
+            // 如果使用 InstantDB（使用 subscribeQuery 訂閱的資料）
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db && instantDBBookings.length > 0) {
+                // 計算2個月前的日期（用於清理舊資料）
+                const twoMonthsAgo = new Date();
+                twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+                const cutoffDate = formatDate(twoMonthsAgo);
+                
+                // 從訂閱的資料中過濾出最近2個月的資料
+                let bookings = instantDBBookings.filter(b => {
+                    const bookingDate = b.date ? String(b.date).trim() : '';
+                    return bookingDate >= cutoffDate;
+                });
+                
+                // 統一格式化日期和時間格式
+                bookings = bookings.map((booking) => {
+                    // 處理日期格式
+                    if (booking.date) {
+                        if (typeof booking.date === 'string' && booking.date.includes('T')) {
+                            booking.date = booking.date.split('T')[0];
+                        } else if (booking.date instanceof Date) {
+                            booking.date = formatDate(booking.date);
+                        } else if (typeof booking.date === 'string') {
+                            const dateMatch = booking.date.match(/^(\d{4}-\d{2}-\d{2})/);
+                            if (dateMatch) {
+                                booking.date = dateMatch[1];
+                            } else {
+                                const parsedDate = new Date(booking.date);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    booking.date = formatDate(parsedDate);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 處理時間格式
+                    if (booking.time !== undefined && booking.time !== null) {
+                        if (typeof booking.time === 'number') {
+                            booking.time = String(booking.time).padStart(4, '0');
+                        } else if (typeof booking.time === 'string') {
+                            booking.time = booking.time.padStart(4, '0');
+                        }
+                    }
+                    
+                    return booking;
+                });
+                
+                console.log('✅ 從 InstantDB 訂閱資料讀取到', bookings.length, '筆預約（最近2個月）');
+                return bookings;
+            }
+            
+            // 如果 InstantDB 已啟用但還沒有資料，嘗試從 localStorage 讀取
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db) {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const bookings = JSON.parse(data);
+                    console.log('ℹ️ InstantDB 尚未有資料，從 localStorage 讀取', bookings.length, '筆');
+                    return bookings;
+                }
+                return [];
+            }
+            
+            // 如果還沒設定 API URL，使用 localStorage 作為備用
+            if (!BOOKINGS_API_URL) {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            }
+            
+            // 檢查快取
+            const now = Date.now();
+            if (bookingsCache && (now - cacheTimestamp) < CACHE_DURATION) {
+                return bookingsCache;
+            }
+            
+            try {
+                console.log('正在從 API 讀取預約資料:', BOOKINGS_API_URL + '?action=get');
+                const response = await fetch(BOOKINGS_API_URL + '?action=get');
+                const responseText = await response.text();
+                console.log('API 原始回應:', responseText.substring(0, 500)); // 只顯示前500字元
+                
+                let bookings;
+                try {
+                    bookings = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('解析 JSON 失敗:', e, '原始回應:', responseText);
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    return data ? JSON.parse(data) : [];
+                }
+                
+                // 檢查返回的資料是否為陣列
+                if (!Array.isArray(bookings)) {
+                    console.error('API 返回的資料不是陣列:', bookings);
+                    // 如果返回錯誤物件，嘗試從 localStorage 讀取
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    return data ? JSON.parse(data) : [];
+                }
+                
+                console.log('從 API 載入預約資料:', bookings.length, '筆');
+                
+                // 統一格式化日期和時間格式
+                bookings = bookings.map((booking, index) => {
+                    const originalDate = booking.date;
+                    const originalTime = booking.time;
+                    
+                    // 處理日期格式：將 ISO 格式（2026-01-04T16:00:00.000Z）轉換為 YYYY-MM-DD
+                    if (booking.date) {
+                        if (typeof booking.date === 'string' && booking.date.includes('T')) {
+                            // ISO 格式，提取日期部分（YYYY-MM-DD）
+                            booking.date = booking.date.split('T')[0];
+                        } else if (booking.date instanceof Date) {
+                            // Date 物件，格式化為 YYYY-MM-DD
+                            booking.date = formatDate(booking.date);
+                        } else if (typeof booking.date === 'string') {
+                            // 已經是字串，確保格式正確
+                            const dateMatch = booking.date.match(/^(\d{4}-\d{2}-\d{2})/);
+                            if (dateMatch) {
+                                booking.date = dateMatch[1];
+                            } else {
+                                // 嘗試解析為日期
+                                const parsedDate = new Date(booking.date);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    booking.date = formatDate(parsedDate);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 處理時間格式：將數字（900, 1030）轉換為字串（"0900", "1030"）
+                    if (booking.time !== undefined && booking.time !== null) {
+                        if (typeof booking.time === 'number') {
+                            // 數字格式，轉換為字串並補零
+                            booking.time = String(booking.time).padStart(4, '0');
+                        } else if (typeof booking.time === 'string') {
+                            // 已經是字串，確保格式正確（4位數）
+                            booking.time = booking.time.padStart(4, '0');
+                        }
+                    }
+                    
+                    // 調試：記錄格式轉換（僅前3筆）
+                    if (index < 3) {
+                        console.log('格式轉換:', {
+                            id: booking.id,
+                            date: { original: originalDate, formatted: booking.date },
+                            time: { original: originalTime, formatted: booking.time, originalType: typeof originalTime }
+                        });
+                    }
+                    
+                    return booking;
+                });
+                
+                if (bookings.length > 0) {
+                    console.log('前3筆預約範例（格式化後）:', bookings.slice(0, 3));
+                    // 檢查日期格式
+                    const dateFormats = bookings.map(b => {
+                        const d = b.date ? String(b.date) : '';
+                        return { date: d, format: d.match(/^\d{4}-\d{2}-\d{2}$/) ? 'YYYY-MM-DD' : '其他格式', length: d.length };
+                    });
+                    const uniqueFormats = [...new Set(dateFormats.map(f => f.format))];
+                    console.log('日期格式分析:', uniqueFormats);
+                    if (uniqueFormats.length > 1 || !uniqueFormats.includes('YYYY-MM-DD')) {
+                        console.warn('⚠️ 發現非標準日期格式:', dateFormats.filter(f => f.format !== 'YYYY-MM-DD').slice(0, 5));
+                    }
+                } else {
+                    console.warn('⚠️ API 返回空陣列，可能沒有資料或讀取有問題');
+                }
+                
+                // 更新快取
+                bookingsCache = bookings;
+                cacheTimestamp = now;
+                
+                // 同時更新 localStorage 作為備用
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                
+                return bookings;
+            } catch (error) {
+                console.error('❌ 載入預約資料失敗:', error);
+                
+                // 檢查是否為 CORS 錯誤
+                if (error.message && (error.message.includes('CORS') || error.message.includes('Failed to fetch'))) {
+                    console.warn('⚠️ CORS 錯誤：無法從 Google Sheets API 讀取資料，改用本地儲存');
+                }
+                
+                // 如果 API 失敗，嘗試從 localStorage 讀取
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const localBookings = JSON.parse(data);
+                    console.log('從本地儲存載入預約資料:', localBookings.length, '筆');
+                    return localBookings;
+                }
+                return [];
+            }
+        }
+        
+        // 清除快取（在新增/更新/刪除後調用）
+        function clearBookingsCache() {
+            bookingsCache = null;
+            cacheTimestamp = 0;
+        }
+        
+        // 手動重新載入所有預約資料
+        async function reloadBookings() {
+            showAlert('正在重新載入預約資料...', 'warning');
+            // 清除快取
+            clearBookingsCache();
+            // 重新載入資料
+            const bookings = await getBookings();
+            console.log('重新載入完成，共', bookings.length, '筆預約');
+            // 重新生成日曆
+            await generateCalendar();
+            showAlert(`已重新載入 ${bookings.length} 筆預約資料`, 'success');
+        }
+
+        // 新增預約（異步）
+        // skipReload: 如果為 true，則不立即重新載入資料（用於批量新增）
+        async function addBooking(booking, isRepeat = false, weekday = null, groupId = null, skipReload = false) {
+            // 生成唯一 ID（使用時間戳 + 隨機數 + 計數器）
+            const uniqueId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now().toString().replace('.', '');
+            const newBooking = {
+                id: uniqueId,
+                ...booking,
+                isRepeat: isRepeat,
+                weekday: weekday,
+                groupId: groupId || (isRepeat ? Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) : null),
+                createdAt: new Date().toISOString()
+            };
+            
+            console.log('準備新增預約:', newBooking);
+            
+            // 如果使用 InstantDB
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db) {
+                try {
+                    // 使用 InstantDB 的實際 API（根據範例）
+                    // 注意：InstantDB 會自動生成 ID，但我們保留自定義 ID 以保持兼容性
+                    const bookingData = {
+                        ...booking,
+                        isRepeat: isRepeat || false,
+                        // 確保 weekday 是 number 類型，如果是 null 則不包含此欄位
+                        ...(weekday !== null && weekday !== undefined ? { weekday: Number(weekday) } : {}),
+                        // 確保 groupId 是 string 或 null
+                        groupId: groupId || (isRepeat ? Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) : null),
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    // 使用 db.tx 構建交易（根據 InstantDB 範例）
+                    db.transact(
+                        db.tx.REC_RESERVE_DB[window.InstantDB.id()].update(bookingData)
+                    );
+                    
+                    console.log('✅ 預約已成功寫入 InstantDB');
+                    
+                    // 定期清理舊資料（每10次新增清理一次）
+                    if (Math.random() < 0.1 && db.tx) {
+                        const twoMonthsAgo = new Date();
+                        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+                        const cutoffDate = formatDate(twoMonthsAgo);
+                        
+                        // 查詢舊資料並刪除
+                        const oldBookings = instantDBBookings.filter(b => {
+                            const bookingDate = b.date ? String(b.date).trim() : '';
+                            return bookingDate < cutoffDate;
+                        });
+                        
+                        if (oldBookings.length > 0) {
+                            const deleteTxs = oldBookings.map(booking => 
+                                db.tx.REC_RESERVE_DB[booking.id].delete()
+                            );
+                            db.transact(deleteTxs);
+                            console.log(`清理 ${oldBookings.length} 筆超過2個月的舊資料`);
+                        }
+                    }
+                    
+                    // InstantDB 使用 subscribeQuery，資料會自動更新，不需要手動重新載入
+                    return { ...bookingData, id: uniqueId };
+                } catch (error) {
+                    console.error('❌ 新增預約到 InstantDB 失敗:', error);
+                    // 如果 InstantDB 失敗，使用 localStorage 作為備用
+                    const bookings = await getBookings();
+                    bookings.push(newBooking);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                    return newBooking;
+                }
+            }
+            
+            // 如果還沒設定 API URL，使用 localStorage
+            if (!BOOKINGS_API_URL) {
+                const bookings = await getBookings();
+                bookings.push(newBooking);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                console.log('✅ 預約已保存到 localStorage, ID:', newBooking.id, '總共', bookings.length, '筆預約');
+                return newBooking;
+            }
+            
+            try {
+                // 使用 GET 請求通過 URL 參數傳遞資料，避免 CORS 預檢請求
+                const bookingData = encodeURIComponent(JSON.stringify(newBooking));
+                const url = `${BOOKINGS_API_URL}?action=add&bookingData=${bookingData}`;
+                console.log('發送新增預約請求:', url.substring(0, 200) + '...');
+                const response = await fetch(url, {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                console.log('API 回應結果:', result);
+                
+                if (result.success) {
+                    console.log('✅ 預約已成功寫入 Google Sheets, ID:', result.id);
+                    if (!skipReload) {
+                        // 清除快取，強制重新從 API 讀取
+                        clearBookingsCache();
+                        // 等待一小段時間確保 Google Sheets 已更新
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // 重新載入所有預約資料（從 API）
+                        const allBookings = await getBookings();
+                        // 更新 localStorage 作為備用
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allBookings));
+                    } else {
+                        // 批量模式：只清除快取，不立即重新載入
+                        clearBookingsCache();
+                        console.log('批量模式：預約已寫入，稍後統一重新載入');
+                    }
+                    return newBooking;
+                } else {
+                    console.error('❌ 新增預約失敗:', result.error);
+                    throw new Error(result.error || '新增預約失敗');
+                }
+            } catch (error) {
+                console.error('❌ 新增預約失敗:', error);
+                
+                // 檢查是否為 CORS 錯誤
+                if (error.message && error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                    const errorMsg = '⚠️ CORS 錯誤：無法連接到 Google Sheets API。\n\n' +
+                        '請確認：\n' +
+                        '1. 您是否直接打開 HTML 文件？請改為通過 HTTP 服務器訪問（例如部署到 Netlify）\n' +
+                        '2. Google Apps Script 是否已正確部署為「網頁應用程式」？\n' +
+                        '3. 部署權限是否設為「任何人」？';
+                    console.error(errorMsg);
+                    showAlert(errorMsg, 'danger');
+                }
+                
+                // 如果 API 失敗，使用 localStorage 作為備用
+                const bookings = await getBookings();
+                bookings.push(newBooking);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                console.warn('⚠️ 已將預約保存到本地儲存（localStorage），但未同步到 Google Sheets');
+                return newBooking;
+            }
+        }
+
+        // 更新預約（異步）
+        async function updateBooking(id, booking) {
+            // 如果使用 InstantDB
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db) {
+                try {
+                    // 使用 InstantDB 的實際 API（根據範例）
+                    db.transact(
+                        db.tx.REC_RESERVE_DB[id].update(booking)
+                    );
+                    
+                    console.log('✅ 預約已成功更新到 InstantDB, ID:', id);
+                    // InstantDB 使用 subscribeQuery，資料會自動更新
+                    return true;
+                } catch (error) {
+                    console.error('❌ 更新預約到 InstantDB 失敗:', error);
+                    // 如果 InstantDB 失敗，使用 localStorage 作為備用
+                    const bookings = await getBookings();
+                    const index = bookings.findIndex(b => b.id === id);
+                    if (index !== -1) {
+                        bookings[index] = { ...bookings[index], ...booking };
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            
+            // 如果還沒設定 API URL，使用 localStorage
+            if (!BOOKINGS_API_URL) {
+                const bookings = await getBookings();
+                const index = bookings.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    bookings[index] = { ...bookings[index], ...booking };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                    return true;
+                }
+                return false;
+            }
+            
+            try {
+                // 使用 GET 請求通過 URL 參數傳遞資料
+                const bookingData = encodeURIComponent(JSON.stringify(booking));
+                const url = `${BOOKINGS_API_URL}?action=update&id=${encodeURIComponent(id)}&bookingData=${bookingData}`;
+                const response = await fetch(url, {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 清除快取，強制重新從 API 讀取
+                    clearBookingsCache();
+                    // 等待一小段時間確保 Google Sheets 已更新
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // 重新載入所有預約資料（從 API）
+                    const allBookings = await getBookings();
+                    // 更新 localStorage 作為備用
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allBookings));
+                    return true;
+                } else {
+                    throw new Error(result.error || '更新預約失敗');
+                }
+            } catch (error) {
+                console.error('更新預約失敗:', error);
+                // 如果 API 失敗，使用 localStorage 作為備用
+                const bookings = await getBookings();
+                const index = bookings.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    bookings[index] = { ...bookings[index], ...booking };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                    return true;
+                }
+                return false;
+            }
+        }
+        
+        // 刪除整個每週重複組（異步）
+        async function deleteRepeatGroup(groupId) {
+            // 如果還沒設定 API URL，使用 localStorage
+            if (!BOOKINGS_API_URL) {
+                const bookings = await getBookings();
+                const filtered = bookings.filter(b => b.groupId !== groupId);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+                return;
+            }
+            
+            try {
+                // 使用 GET 請求通過 URL 參數傳遞資料
+                const url = `${BOOKINGS_API_URL}?action=deleteGroup&groupId=${encodeURIComponent(groupId)}`;
+                const response = await fetch(url, {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 清除快取，強制重新從 API 讀取
+                    clearBookingsCache();
+                    // 等待一小段時間確保 Google Sheets 已更新
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // 重新載入所有預約資料（從 API）
+                    const allBookings = await getBookings();
+                    // 更新 localStorage 作為備用
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allBookings));
+                } else {
+                    throw new Error(result.error || '刪除組失敗');
+                }
+            } catch (error) {
+                console.error('刪除組失敗:', error);
+                // 如果 API 失敗，使用 localStorage 作為備用
+                const bookings = await getBookings();
+                const filtered = bookings.filter(b => b.groupId !== groupId);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+            }
+        }
+
+        // 刪除預約（異步）
+        async function deleteBooking(id) {
+            // 如果使用 InstantDB
+            if (typeof INSTANTDB_ENABLED !== 'undefined' && INSTANTDB_ENABLED && db) {
+                try {
+                    // 使用 InstantDB 的實際 API（根據範例）
+                    db.transact(
+                        db.tx.REC_RESERVE_DB[id].delete()
+                    );
+                    
+                    console.log('✅ 預約已成功從 InstantDB 刪除, ID:', id);
+                    // InstantDB 使用 subscribeQuery，資料會自動更新
+                    return;
+                } catch (error) {
+                    console.error('❌ 從 InstantDB 刪除預約失敗:', error);
+                    // 如果 InstantDB 失敗，使用 localStorage 作為備用
+                    const bookings = await getBookings();
+                    const filtered = bookings.filter(b => b.id !== id);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+                    return;
+                }
+            }
+            
+            // 如果還沒設定 API URL，使用 localStorage
+            if (!BOOKINGS_API_URL) {
+                const bookings = await getBookings();
+                const filtered = bookings.filter(b => b.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+                return;
+            }
+            
+            try {
+                // 使用 GET 請求通過 URL 參數傳遞資料
+                const url = `${BOOKINGS_API_URL}?action=delete&id=${encodeURIComponent(id)}`;
+                const response = await fetch(url, {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 清除快取，強制重新從 API 讀取
+                    clearBookingsCache();
+                    // 等待一小段時間確保 Google Sheets 已更新
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // 重新載入所有預約資料（從 API）
+                    const allBookings = await getBookings();
+                    // 更新 localStorage 作為備用
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allBookings));
+                } else {
+                    throw new Error(result.error || '刪除預約失敗');
+                }
+            } catch (error) {
+                console.error('刪除預約失敗:', error);
+                // 如果 API 失敗，使用 localStorage 作為備用
+                const bookings = await getBookings();
+                const filtered = bookings.filter(b => b.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+            }
+        }
+
+        // 檢查撞期（異步）
+        async function checkConflict(newBooking, excludeId = null) {
+            const bookings = await getBookings();
+            const conflicts = bookings.filter(booking => {
+                if (excludeId && booking.id === excludeId) return false;
+                // 如果是同組的預約，不算撞期
+                if (newBooking.groupId && booking.groupId === newBooking.groupId) return false;
+                return booking.date === newBooking.date &&
+                       booking.room === newBooking.room &&
+                       booking.time === newBooking.time;
+            });
+            return conflicts;
+        }
+
+        // 顯示訊息
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        // 更新撞期顯示
+        async function updateConflictDisplay() {
+            const formData = new FormData(document.getElementById('bookingForm'));
+            const bookingType = formData.get('bookingType');
+            const room = formData.get('room');
+            const times = formData.getAll('time');
+            const editingId = document.getElementById('editingId').value;
+
+            if (!room || times.length === 0) {
+                document.getElementById('conflictSection').style.display = 'none';
+                return;
+            }
+
+            let dates = [];
+            if (bookingType === 'repeat') {
+                dates = getSelectedDates();
+            } else {
+                const date = formData.get('bookingDate');
+                if (date) dates = [date];
+            }
+
+            if (dates.length === 0) {
+                document.getElementById('conflictSection').style.display = 'none';
+                return;
+            }
+
+            // 如果是編輯模式，需要排除整個組的預約
+            let excludeGroupId = null;
+            if (editingId) {
+                const bookings = await getBookings();
+                const editingBooking = bookings.find(b => b.id === editingId);
+                if (editingBooking && editingBooking.isRepeat && editingBooking.groupId) {
+                    excludeGroupId = editingBooking.groupId;
+                }
+            }
+
+            const conflicts = [];
+            for (const date of dates) {
+                for (const time of times) {
+                    const booking = { date, room, time };
+                    // 檢查撞期，排除正在編輯的預約和其組內其他預約
+                    const conflictList = await checkConflict(booking, editingId || null);
+                    conflictList.forEach(c => {
+                        // 如果是同組的預約，不算撞期
+                        if (excludeGroupId && c.groupId === excludeGroupId) {
+                            return;
+                        }
+                        conflicts.push({
+                            date: c.date,
+                            room: c.room,
+                            time: c.time,
+                            program: c.program
+                        });
+                    });
+                }
+            }
+
+            const conflictSection = document.getElementById('conflictSection');
+            const conflictList = document.getElementById('conflictList');
+            
+            if (conflicts.length > 0) {
+                conflictSection.style.display = 'block';
+                conflictList.innerHTML = conflicts.map(c => 
+                    `<div class="conflict-item">${c.date} ${c.room}室 ${c.time} 已被 ${c.program} 預約</div>`
+                ).join('');
+            } else {
+                conflictSection.style.display = 'none';
+            }
+        }
+
+        // 切換重複預約選項
+        function toggleRepeatOptions() {
+            const bookingType = document.getElementById('bookingType').value;
+            const singleDateGroup = document.getElementById('singleDateGroup');
+            const repeatGroup = document.getElementById('repeatGroup');
+            const repeatOptions = document.getElementById('repeatOptions');
+
+            if (bookingType === 'repeat') {
+                singleDateGroup.style.display = 'none';
+                repeatGroup.style.display = 'block';
+                repeatOptions.classList.add('show');
+                document.getElementById('bookingDate').removeAttribute('required');
+                document.getElementById('weekday').setAttribute('required', 'required');
+            } else {
+                singleDateGroup.style.display = 'block';
+                repeatGroup.style.display = 'none';
+                repeatOptions.classList.remove('show');
+                document.getElementById('bookingDate').setAttribute('required', 'required');
+                document.getElementById('weekday').removeAttribute('required');
+                clearDateButtons();
+            }
+        }
+
+        // 生成日期選擇按鈕
+        function generateDateButtons() {
+            const weekday = document.getElementById('weekday').value;
+            if (!weekday) {
+                clearDateButtons();
+                return;
+            }
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const targetWeekday = parseInt(weekday); // 1=星期一, 2=星期二, ..., 6=星期六
+            
+            // 直接遍歷該月所有日期，找出所有符合目標星期幾的日期
+            const dates = [];
+            for (let day = 1; day <= lastDay; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay(); // 0=星期日, 1=星期一, ..., 6=星期六
+                if (dayOfWeek === targetWeekday) {
+                    dates.push(date);
+                }
+            }
+
+            const container = document.getElementById('dateSelectionContainer');
+            container.innerHTML = '';
+
+            if (dates.length === 0) {
+                container.innerHTML = '<p style="font-size: 12px; color: #7f8c8d;">該月沒有對應的日期</p>';
+                return;
+            }
+
+            dates.forEach(date => {
+                const dateStr = formatDate(date);
+                const isHoliday = HK_HOLIDAYS.includes(dateStr);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `date-btn ${isHoliday ? 'holiday' : ''}`;
+                btn.dataset.date = dateStr;
+                btn.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+                btn.onclick = function() {
+                    this.classList.toggle('selected');
+                    updateConflictDisplay();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 清除日期按鈕
+        function clearDateButtons() {
+            const container = document.getElementById('dateSelectionContainer');
+            container.innerHTML = '<p style="font-size: 12px; color: #7f8c8d;">請先選擇「每週」的星期</p>';
+        }
+
+        // 取得選中的日期
+        function getSelectedDates() {
+            const selectedButtons = document.querySelectorAll('.date-btn.selected');
+            return Array.from(selectedButtons).map(btn => btn.dataset.date);
+        }
+
+        // 根據當前顯示的月份更新預設預約日期
+        function updateDefaultBookingDate() {
+            const today = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth();
+            
+            // 如果今天在當前顯示的月份內，使用今天；否則使用當前月份的第一天
+            let defaultDate;
+            if (today.getFullYear() === currentYear && today.getMonth() === currentMonth) {
+                defaultDate = today;
+            } else {
+                defaultDate = new Date(currentYear, currentMonth, 1);
+            }
+            
+            document.getElementById('bookingDate').value = formatDate(defaultDate);
+        }
+
+        // 重設表單
+        function resetForm() {
+            document.getElementById('bookingForm').reset();
+            document.getElementById('editingId').value = '';
+            document.getElementById('submitBtn').textContent = '提交預約';
+            document.getElementById('cancelBtn').style.display = 'none';
+            clearDateButtons();
+            document.getElementById('bookingType').value = 'single';
+            toggleRepeatOptions();
+            updateDefaultBookingDate(); // 使用當前顯示的月份來設定預設日期
+            updateConflictDisplay();
+        }
+
+        // 編輯預約（異步）
+        async function editBooking(id) {
+            const bookings = await getBookings();
+            const booking = bookings.find(b => b.id === id);
+            if (!booking) return;
+
+            document.getElementById('editingId').value = id;
+            document.getElementById('program').value = booking.program;
+            updateProgramColorPreview(); // 更新顏色預覽
+            document.getElementById('room').value = booking.room;
+            document.getElementById('operator').value = booking.operator;
+            document.getElementById('memo').value = booking.memo || '';
+            document.getElementById('recorder').value = booking.recorder || '';
+            
+            // 檢查是否為每週重複預約
+            if (booking.isRepeat && booking.weekday && booking.groupId) {
+                // 切換到每週重複模式
+                document.getElementById('bookingType').value = 'repeat';
+                document.getElementById('weekday').value = booking.weekday;
+                toggleRepeatOptions();
+                generateDateButtons();
+                
+                // 選中該 groupId 的所有日期
+                const groupBookings = bookings.filter(b => b.groupId === booking.groupId);
+                
+                // 收集該組所有不同的時段
+                const groupTimes = [...new Set(groupBookings.map(b => b.time))];
+                
+                // 選中所有日期
+                groupBookings.forEach(b => {
+                    const btn = document.querySelector(`.date-btn[data-date="${b.date}"]`);
+                    if (btn) {
+                        btn.classList.add('selected');
+                    }
+                });
+                
+                // 勾選所有時段
+                TIME_SLOTS.forEach(time => {
+                    document.getElementById(`time${time}`).checked = groupTimes.includes(time);
+                });
+            } else {
+                // 單次預約
+                document.getElementById('bookingType').value = 'single';
+                document.getElementById('bookingDate').value = booking.date;
+                toggleRepeatOptions();
+                
+                // 設定時段
+                TIME_SLOTS.forEach(time => {
+                    document.getElementById(`time${time}`).checked = booking.time === time;
+                });
+            }
+
+            document.getElementById('submitBtn').textContent = '更新預約';
+            document.getElementById('cancelBtn').style.display = 'block';
+            updateConflictDisplay();
+            
+            // 滾動到表單
+            document.querySelector('.booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // 月曆相關
+        let currentDate = new Date();
+        const MONTH_STORAGE_KEY = 'selected_month';
+        const MONTH_PASSWORD = 'admin2025'; // 月份修改密碼（您可以自行修改）
+        const MONTH_UNLOCK_KEY = 'month_unlocked';
+        let isMonthUnlocked = false;
+
+        // 檢查是否已解鎖
+        function checkMonthUnlock() {
+            const unlocked = sessionStorage.getItem(MONTH_UNLOCK_KEY);
+            if (unlocked === 'true') {
+                isMonthUnlocked = true;
+                document.getElementById('monthSelector').disabled = false;
+                document.getElementById('monthLockBtn').textContent = '🔓 已解鎖';
+                document.getElementById('monthLockBtn').style.background = '#27ae60';
+                document.getElementById('monthPasswordContainer').style.display = 'none';
+            } else {
+                isMonthUnlocked = false;
+                document.getElementById('monthSelector').disabled = true;
+                document.getElementById('monthLockBtn').textContent = '🔒 解鎖';
+                document.getElementById('monthLockBtn').style.background = '#95a5a6';
+            }
+        }
+
+        // 切換月份鎖定
+        function toggleMonthLock() {
+            if (isMonthUnlocked) {
+                // 鎖定
+                isMonthUnlocked = false;
+                sessionStorage.removeItem(MONTH_UNLOCK_KEY);
+                document.getElementById('monthSelector').disabled = true;
+                document.getElementById('monthLockBtn').textContent = '🔒 解鎖';
+                document.getElementById('monthLockBtn').style.background = '#95a5a6';
+                document.getElementById('monthPasswordContainer').style.display = 'none';
+            } else {
+                // 顯示密碼輸入
+                document.getElementById('monthPasswordContainer').style.display = 'flex';
+                document.getElementById('monthPassword').focus();
+            }
+        }
+
+        // 解鎖月份
+        function unlockMonth() {
+            const password = document.getElementById('monthPassword').value;
+            if (password === MONTH_PASSWORD) {
+                isMonthUnlocked = true;
+                sessionStorage.setItem(MONTH_UNLOCK_KEY, 'true');
+                document.getElementById('monthSelector').disabled = false;
+                document.getElementById('monthLockBtn').textContent = '🔓 已解鎖';
+                document.getElementById('monthLockBtn').style.background = '#27ae60';
+                document.getElementById('monthPasswordContainer').style.display = 'none';
+                document.getElementById('monthPassword').value = '';
+                showAlert('月份選擇已解鎖', 'success');
+            } else {
+                showAlert('密碼錯誤', 'danger');
+                document.getElementById('monthPassword').value = '';
+                document.getElementById('monthPassword').focus();
+            }
+        }
+
+        // 取消解鎖
+        function cancelUnlock() {
+            document.getElementById('monthPasswordContainer').style.display = 'none';
+            document.getElementById('monthPassword').value = '';
+        }
+
+        // 載入保存的月份
+        function loadSavedMonth() {
+            const saved = localStorage.getItem(MONTH_STORAGE_KEY);
+            if (saved) {
+                const [year, month] = saved.split('-');
+                currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            }
+            updateMonthSelector();
+        }
+
+        // 更新月份選擇器顯示
+        function updateMonthSelector() {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthSelector').value = `${year}-${month}`;
+        }
+
+        // 切換月份
+        async function changeMonth() {
+            if (!isMonthUnlocked) {
+                showAlert('請先解鎖月份選擇功能', 'warning');
+                updateMonthSelector(); // 恢復原值
+                return;
+            }
+            
+            const monthValue = document.getElementById('monthSelector').value;
+            if (monthValue) {
+                const [year, month] = monthValue.split('-');
+                currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+                // 保存選擇的月份
+                localStorage.setItem(MONTH_STORAGE_KEY, monthValue);
+                await generateCalendar();
+                // 更新表單預設日期為新月份
+                updateDefaultBookingDate();
+                // 重新生成日期按鈕（如果是每週重複模式）
+                const bookingType = document.getElementById('bookingType').value;
+                if (bookingType === 'repeat') {
+                    generateDateButtons();
+                }
+                showAlert(`已切換到 ${year}年${parseInt(month)}月`, 'success');
+            }
+        }
+
+        async function generateCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // 找到第一個星期一
+            let startDate = new Date(firstDay);
+            const firstDayOfWeek = firstDay.getDay();
+            const daysToMonday = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+            startDate.setDate(startDate.getDate() - daysToMonday);
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            // 星期標題（週一到週六）
+            const weekdays = ['一', '二', '三', '四', '五', '六'];
+            weekdays.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // 生成日期（6週 x 6天 = 36天）
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const bookings = await getBookings();
+            console.log('generateCalendar: 載入預約資料', bookings.length, '筆');
+            if (bookings.length > 0) {
+                console.log('generateCalendar: 前3筆預約詳情:', bookings.slice(0, 3).map(b => ({ 
+                    date: b.date, 
+                    program: b.program, 
+                    room: b.room, 
+                    time: b.time,
+                    dateType: typeof b.date,
+                    timeType: typeof b.time,
+                    dateLength: String(b.date).length
+                })));
+                console.log('generateCalendar: 當前顯示月份:', year, '年', month + 1, '月');
+                
+                // 檢查 2026-01-04 的所有預約
+                const jan4Bookings = bookings.filter(b => {
+                    const bookingDate = b.date ? String(b.date).trim() : '';
+                    return bookingDate === '2026-01-04' || bookingDate.startsWith('2026-01-04');
+                });
+                if (jan4Bookings.length > 0) {
+                    console.log('🔍 2026-01-04 的所有預約:', jan4Bookings.map(b => ({
+                        id: b.id,
+                        date: b.date,
+                        dateType: typeof b.date,
+                        room: b.room,
+                        time: b.time,
+                        timeType: typeof b.time,
+                        program: b.program
+                    })));
+                }
+            } else {
+                console.warn('⚠️ generateCalendar: 沒有載入到任何預約資料！');
+            }
+            
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 6; day++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + (week * 7 + day));
+                    
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'day-cell';
+                    
+                    // 標記今天
+                    const dateOnly = new Date(date);
+                    dateOnly.setHours(0, 0, 0, 0);
+                    if (dateOnly.getTime() === today.getTime()) {
+                        dayCell.classList.add('today');
+                    }
+                    
+                    // 標記公眾假期
+                    const dateStr = formatDate(date);
+                    const dayOfWeek = date.getDay(); // 0=星期日, 1=星期一, ..., 6=星期六
+                    const isSaturday = dayOfWeek === 6;
+                    
+                    // 調試：顯示 2026-01-04 的詳細信息
+                    if (dateStr === '2026-01-04') {
+                        console.log('🔍 2026-01-04 詳細信息:', {
+                            dateStr,
+                            dayOfWeek,
+                            isSaturday,
+                            month: date.getMonth(),
+                            currentMonth: month,
+                            isCurrentMonth: date.getMonth() === month
+                        });
+                    }
+                    
+                    if (HK_HOLIDAYS.includes(dateStr)) {
+                        dayCell.classList.add('holiday');
+                    }
+                    
+                    // 調試：檢查這個日期是否有預約
+                    const dayBookingsForDebug = bookings.filter(b => {
+                        const bookingDate = b.date ? String(b.date).trim() : '';
+                        return bookingDate === dateStr;
+                    });
+                    if (dayBookingsForDebug.length > 0 && date.getMonth() === month) {
+                        console.log('📅 日期', dateStr, '有', dayBookingsForDebug.length, '筆預約:', dayBookingsForDebug.map(b => `${b.program}-${b.room}-${b.time}`));
+                        console.log('📅 日期', dateStr, '是星期', dayOfWeek === 0 ? '日' : dayOfWeek === 6 ? '六' : dayOfWeek, '，是否為週六:', isSaturday);
+                    }
+                    
+                    // 標記其他月份
+                    if (date.getMonth() !== month) {
+                        dayCell.classList.add('other-month');
+                    }
+                    
+                    const dayNumber = document.createElement('div');
+                    dayNumber.className = 'day-number';
+                    dayNumber.textContent = date.getDate();
+                    dayCell.appendChild(dayNumber);
+                    
+                    // 使用之前計算的 isSaturday（基於 dayOfWeek === 6）
+                    if (isSaturday) {
+                        dayCell.classList.add('saturday');
+                        
+                        // 週六：只顯示有預約的項目
+                        const dayBookings = bookings.filter(b => {
+                            // 確保日期格式一致（都轉換為 YYYY-MM-DD）
+                            const bookingDate = b.date ? String(b.date).trim() : '';
+                            const match = bookingDate === dateStr;
+                            
+                            // 調試（僅對 2026-01-04）
+                            if (dateStr === '2026-01-04' && match) {
+                                console.log('🔍 週六匹配:', { dateStr, bookingDate, program: b.program, room: b.room, time: b.time });
+                            }
+                            
+                            return match;
+                        });
+                        
+                        if (dayBookings.length > 0) {
+                            console.log('✅ 週六有預約:', dateStr, dayBookings.length, '筆');
+                            // 按錄音室和時間排序
+                            dayBookings.sort((a, b) => {
+                                if (a.room !== b.room) return a.room.localeCompare(b.room);
+                                return a.time.localeCompare(b.time);
+                            });
+                            
+                            const saturdayContainer = document.createElement('div');
+                            saturdayContainer.className = 'saturday-bookings';
+                            
+                            dayBookings.forEach(booking => {
+                                const item = document.createElement('div');
+                                const color = getProgramColor(booking.program);
+                                item.className = 'saturday-booking-item';
+                                item.style.background = color;
+                                item.style.color = 'white';
+                                
+                                // 顯示格式：A-0900, GS, 強
+                                const displayText = `${booking.room}-${booking.time}, ${booking.program}${booking.program !== '維修保養' ? ', ' + booking.operator : ''}`;
+                                item.textContent = displayText;
+                                item.title = `節目：${booking.program}\n音控員：${booking.operator}\n${booking.memo ? '備註：' + booking.memo : ''}`;
+                                
+                                // 編輯和刪除按鈕
+                                const actions = document.createElement('div');
+                                actions.className = 'booking-actions';
+                                
+                                const editBtn = document.createElement('button');
+                                editBtn.className = 'action-btn edit-btn';
+                                editBtn.textContent = '✎';
+                                editBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    editBooking(booking.id);
+                                };
+                                
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.className = 'action-btn delete-btn';
+                                deleteBtn.textContent = '×';
+                                deleteBtn.onclick = async (e) => {
+                                    e.stopPropagation();
+                                    if (booking.isRepeat && booking.groupId) {
+                                        const bookings = await getBookings();
+                                        const groupCount = bookings.filter(b => b.groupId === booking.groupId).length;
+                                        if (confirm(`這是每週重複預約的一部分（共${groupCount}個預約）。\n確定要刪除整個每週重複預約嗎？`)) {
+                                            await deleteRepeatGroup(booking.groupId);
+                                            await generateCalendar();
+                                            updateConflictDisplay();
+                                            showAlert('每週重複預約已全部刪除', 'success');
+                                        }
+                                    } else {
+                                        if (confirm('確定要刪除此預約嗎？')) {
+                                            await deleteBooking(booking.id);
+                                            await generateCalendar();
+                                            updateConflictDisplay();
+                                            showAlert('預約已刪除', 'success');
+                                        }
+                                    }
+                                };
+                                
+                                actions.appendChild(editBtn);
+                                actions.appendChild(deleteBtn);
+                                item.appendChild(actions);
+                                
+                                saturdayContainer.appendChild(item);
+                            });
+                            
+                            dayCell.appendChild(saturdayContainer);
+                        }
+                    } else {
+                        // 週一到週五：使用表格格式
+                        const table = document.createElement('table');
+                        table.className = 'time-table';
+                        
+                        // 表頭：時段標籤
+                        const headerRow = document.createElement('tr');
+                        const timeHeader = document.createElement('td');
+                        timeHeader.className = 'time-label';
+                        timeHeader.textContent = '時段';
+                        timeHeader.style.background = '#4B7970';
+                        timeHeader.style.color = 'white';
+                        headerRow.appendChild(timeHeader);
+                        
+                        // 錄音室顏色對應
+                        const roomColors = {
+                            'A': '#ffcdd2', // 淺紅色
+                            'B': '#ffe0b2', // 淺橙色
+                            'C': '#c8e6c9', // 淺綠色
+                            'D': '#e1bee7'  // 淺紫色
+                        };
+                        
+                        ROOMS.forEach(room => {
+                            const roomHeader = document.createElement('td');
+                            roomHeader.className = 'room-cell';
+                            roomHeader.textContent = room;
+                            roomHeader.style.background = roomColors[room];
+                            roomHeader.style.fontWeight = 'bold';
+                            headerRow.appendChild(roomHeader);
+                        });
+                        table.appendChild(headerRow);
+                        
+                        // 每個時段一行
+                        TIME_SLOTS.forEach(time => {
+                            const row = document.createElement('tr');
+                            
+                            // 時段標籤（只有 10:30 和 15:30 用淺灰底色）
+                            const timeCell = document.createElement('td');
+                            timeCell.className = 'time-label';
+                            timeCell.textContent = time.substring(0, 2) + ':' + time.substring(2);
+                            if (time === '1030' || time === '1530') {
+                                timeCell.style.background = '#e0e0e0';
+                            }
+                            row.appendChild(timeCell);
+                            
+                            // 每個錄音室一格
+                            ROOMS.forEach(room => {
+                                const cell = document.createElement('td');
+                                cell.className = 'room-cell';
+                                
+                                // 查找該日期、時段、錄音室的預約
+                                const dayBookings = bookings.filter(b => {
+                                    // 確保日期格式一致（都轉換為 YYYY-MM-DD）
+                                    let bookingDate = b.date;
+                                    if (!bookingDate) {
+                                        bookingDate = '';
+                                    } else if (typeof bookingDate === 'string') {
+                                        // 如果是 ISO 格式（包含 T），提取日期部分
+                                        if (bookingDate.includes('T')) {
+                                            bookingDate = bookingDate.split('T')[0];
+                                        } else {
+                                            bookingDate = bookingDate.trim();
+                                        }
+                                    } else if (bookingDate instanceof Date) {
+                                        bookingDate = formatDate(bookingDate);
+                                    } else {
+                                        bookingDate = String(bookingDate).trim();
+                                    }
+                                    
+                                    // 確保時間格式一致（都轉換為 4 位數字串）
+                                    let bookingTime = b.time;
+                                    if (typeof bookingTime === 'number') {
+                                        bookingTime = String(bookingTime).padStart(4, '0');
+                                    } else if (bookingTime) {
+                                        bookingTime = String(bookingTime).trim().padStart(4, '0');
+                                    } else {
+                                        bookingTime = '';
+                                    }
+                                    
+                                    const dateMatch = bookingDate === dateStr;
+                                    const roomMatch = b.room === room;
+                                    const timeMatch = bookingTime === time;
+                                    const match = dateMatch && roomMatch && timeMatch;
+                                    
+                                    // 強制調試輸出（對 2026-01-04 的所有預約）
+                                    if (dateStr === '2026-01-04' && (dateMatch || bookingDate.includes('2026-01-04'))) {
+                                        console.log('🔍 匹配檢查:', {
+                                            dateStr,
+                                            bookingDate,
+                                            bookingDateOriginal: b.date,
+                                            bookingDateType: typeof b.date,
+                                            dateMatch,
+                                            room,
+                                            bookingRoom: b.room,
+                                            roomMatch,
+                                            time,
+                                            bookingTime,
+                                            bookingTimeOriginal: b.time,
+                                            bookingTimeType: typeof b.time,
+                                            timeMatch,
+                                            fullMatch: match,
+                                            program: b.program,
+                                            id: b.id
+                                        });
+                                    }
+                                    
+                                    // 如果匹配成功，強制輸出
+                                    if (match) {
+                                        console.log('✅ 找到匹配的預約:', {
+                                            dateStr,
+                                            bookingDate,
+                                            room,
+                                            time,
+                                            bookingTime,
+                                            program: b.program,
+                                            id: b.id
+                                        });
+                                    }
+                                    
+                                    if (bookingDate === dateStr && b.room === room && !match) {
+                                        console.log('⚠️ 日期和房間匹配但時段不匹配:', { 
+                                            dateStr, 
+                                            bookingDate, 
+                                            room, 
+                                            time, 
+                                            bookingTime, 
+                                            bookingTimeOriginal: b.time,
+                                            bookingTimeType: typeof b.time, 
+                                            timeType: typeof time 
+                                        });
+                                    }
+                                    return match;
+                                });
+                                
+                                if (dayBookings.length > 0) {
+                                    console.log('✅ 顯示預約:', dateStr, room, time, dayBookings[0].program, 'ID:', dayBookings[0].id);
+                                    console.log('✅ 準備創建 DOM 元素，cell 將被添加到 row');
+                                    console.log('✅ dayBookings 數量:', dayBookings.length, '預約詳情:', dayBookings[0]);
+                                    const booking = dayBookings[0]; // 取第一個（理論上應該只有一個）
+                                    const color = getProgramColor(booking.program);
+                                    
+                                    cell.className = 'room-cell booked';
+                                    cell.style.background = color;
+                                    cell.style.color = 'white';
+                                    
+                                    // 顯示格式：節目--音控員（維修保養不顯示音控員）
+                                    if (booking.program === '維修保養') {
+                                        cell.textContent = booking.program;
+                                    } else {
+                                        cell.textContent = `${booking.program}--${booking.operator}`;
+                                    }
+                                    
+                                    cell.title = `節目：${booking.program}\n音控員：${booking.operator}\n${booking.memo ? '備註：' + booking.memo : ''}`;
+                                    
+                                    // 編輯和刪除按鈕
+                                    const actions = document.createElement('div');
+                                    actions.className = 'booking-actions';
+                                    
+                                    const editBtn = document.createElement('button');
+                                    editBtn.className = 'action-btn edit-btn';
+                                    editBtn.textContent = '✎';
+                                    editBtn.onclick = (e) => {
+                                        e.stopPropagation();
+                                        editBooking(booking.id);
+                                    };
+                                    
+                                    const deleteBtn = document.createElement('button');
+                                    deleteBtn.className = 'action-btn delete-btn';
+                                    deleteBtn.textContent = '×';
+                                    deleteBtn.onclick = async (e) => {
+                                        e.stopPropagation();
+                                        if (booking.isRepeat && booking.groupId) {
+                                            const bookings = await getBookings();
+                                            const groupCount = bookings.filter(b => b.groupId === booking.groupId).length;
+                                            if (confirm(`這是每週重複預約的一部分（共${groupCount}個預約）。\n確定要刪除整個每週重複預約嗎？`)) {
+                                                await deleteRepeatGroup(booking.groupId);
+                                                await generateCalendar();
+                                                updateConflictDisplay();
+                                                showAlert('每週重複預約已全部刪除', 'success');
+                                            }
+                                        } else {
+                                            if (confirm('確定要刪除此預約嗎？')) {
+                                                await deleteBooking(booking.id);
+                                                await generateCalendar();
+                                                updateConflictDisplay();
+                                                showAlert('預約已刪除', 'success');
+                                            }
+                                        }
+                                    };
+                                    
+                                    actions.appendChild(editBtn);
+                                    actions.appendChild(deleteBtn);
+                                    cell.appendChild(actions);
+                                    
+                                    // 確認 cell 已設置內容
+                                    console.log('✅ Cell 內容已設置:', {
+                                        dateStr,
+                                        room,
+                                        time,
+                                        cellText: cell.textContent,
+                                        cellBackground: cell.style.background,
+                                        cellClassName: cell.className
+                                    });
+                                }
+                                
+                                row.appendChild(cell);
+                                // 確認 cell 已添加到 row
+                                if (dayBookings.length > 0) {
+                                    console.log('✅ Cell 已添加到 row, row 子元素數量:', row.children.length);
+                                }
+                            });
+                            
+                            table.appendChild(row);
+                        });
+                        
+                        dayCell.appendChild(table);
+                        // 確認 table 已添加到 dayCell（僅對 2026-01-04 輸出）
+                        if (dateStr === '2026-01-04' && !isSaturday) {
+                            const hasBookings = Array.from(dayCell.querySelectorAll('.room-cell.booked')).length > 0;
+                            console.log('✅ Table 已添加到 dayCell (2026-01-04), 找到已預約的 cell 數量:', hasBookings ? Array.from(dayCell.querySelectorAll('.room-cell.booked')).length : 0);
+                        }
+                    }
+                    grid.appendChild(dayCell);
+                }
+            }
+            
+            // 更新月份標題
+            document.getElementById('current-month').textContent = 
+                `${year}年${month + 1}月`;
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+
+        // 表單提交（異步）
+        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const bookingType = formData.get('bookingType');
+            const times = formData.getAll('time');
+            const editingId = document.getElementById('editingId').value;
+            
+            if (times.length === 0) {
+                showAlert('請至少選擇一個時段', 'danger');
+                return;
+            }
+            
+            const program = formData.get('program');
+            const room = formData.get('room');
+            const operator = formData.get('operator');
+            const memo = formData.get('memo') || '';
+            const recorder = formData.get('recorder') || '';
+            
+            let dates = [];
+            
+            if (bookingType === 'repeat') {
+                const weekday = formData.get('weekday');
+                if (!weekday) {
+                    showAlert('請選擇每週的星期', 'danger');
+                    return;
+                }
+                
+                dates = getSelectedDates();
+                if (dates.length === 0) {
+                    showAlert('請至少選擇一個日期', 'danger');
+                    return;
+                }
+            } else {
+                const date = formData.get('bookingDate');
+                if (!date) {
+                    showAlert('請選擇預約日期', 'danger');
+                    return;
+                }
+                dates = [date];
+            }
+            
+            let hasConflict = false;
+            const conflictMessages = [];
+            let successCount = 0;
+            
+            // 處理更新模式
+            let groupId = null;
+            if (editingId) {
+                const bookings = await getBookings();
+                const editingBooking = bookings.find(b => b.id === editingId);
+                if (editingBooking) {
+                    // 如果是每週重複預約，需要處理整個組
+                    if (editingBooking.isRepeat && editingBooking.groupId) {
+                        if (bookingType === 'repeat') {
+                            // 更新每週重複：刪除舊組，建立新組
+                            groupId = editingBooking.groupId;
+                            const oldGroupBookings = bookings.filter(b => b.groupId === groupId);
+                            for (const b of oldGroupBookings) {
+                                await deleteBooking(b.id);
+                            }
+                        } else {
+                            // 改為單次預約：刪除整個組，只保留一個
+                            const oldGroupBookings = bookings.filter(b => b.groupId === editingBooking.groupId);
+                            for (const b of oldGroupBookings) {
+                                await deleteBooking(b.id);
+                            }
+                        }
+                    } else {
+                        // 單次預約更新：先刪除舊的
+                        await deleteBooking(editingId);
+                    }
+                }
+            }
+            
+            // 如果是每週重複模式，生成新的 groupId
+            if (bookingType === 'repeat' && !groupId) {
+                groupId = Date.now().toString();
+            }
+            
+            // 先檢查所有撞期
+            for (const date of dates) {
+                for (const time of times) {
+                    const booking = {
+                        program,
+                        date,
+                        room,
+                        time,
+                        operator,
+                        memo,
+                        recorder
+                    };
+                    
+                    // 檢查撞期（排除正在編輯的預約）
+                    const conflicts = await checkConflict(booking, editingId || null);
+                    
+                    if (conflicts.length > 0) {
+                        hasConflict = true;
+                        conflicts.forEach(conflict => {
+                            conflictMessages.push(`${date} ${room}室 ${time} 時段已有預約（${conflict.program}）`);
+                        });
+                    }
+                }
+            }
+            
+            // 如果沒有撞期，才進行新增
+            if (!hasConflict) {
+                // 先批量新增所有預約（不立即重新載入）
+                const bookingsToAdd = [];
+                for (const date of dates) {
+                    for (const time of times) {
+                        const booking = {
+                            program,
+                            date,
+                            room,
+                            time,
+                            operator,
+                            memo,
+                            recorder
+                        };
+                        
+                        const isRepeat = bookingType === 'repeat';
+                        const weekday = isRepeat ? formData.get('weekday') : null;
+                        bookingsToAdd.push({ booking, isRepeat, weekday, groupId });
+                    }
+                }
+                
+                // 批量新增所有預約
+                for (const item of bookingsToAdd) {
+                    await addBooking(item.booking, item.isRepeat, item.weekday, item.groupId, true); // 傳入 true 表示不立即重新載入
+                    successCount++;
+                }
+                
+                // 所有預約都寫入後，一次性清除快取並重新載入
+                clearBookingsCache();
+                
+                // 如果使用 localStorage，不需要等待；如果使用 Google Sheets API，需要等待寫入完成
+                if (BOOKINGS_API_URL) {
+                    console.log('等待 Google Sheets 完成寫入...');
+                    await new Promise(resolve => setTimeout(resolve, 3000)); // 等待 Google Sheets 完成所有寫入
+                } else {
+                    console.log('使用 localStorage，立即重新載入資料...');
+                }
+                
+                console.log('開始重新載入所有預約資料...');
+                // 再次清除快取，確保強制重新讀取
+                clearBookingsCache();
+                const allBookings = await getBookings();
+                console.log('重新載入完成，共', allBookings.length, '筆預約');
+                if (allBookings.length > 0) {
+                    console.log('前3筆預約範例:', allBookings.slice(0, 3));
+                }
+                // 確保 localStorage 同步（即使使用 API，也作為備份）
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allBookings));
+            }
+            
+            if (hasConflict && successCount === 0) {
+                showAlert('所有時段都發生撞期：\n' + conflictMessages.join('\n'), 'warning');
+            } else if (hasConflict) {
+                showAlert(`部分預約成功（${successCount}個），部分時段發生撞期`, 'warning');
+            } else {
+                showAlert(editingId ? '預約已更新！' : `預約成功！已建立 ${successCount} 個預約`, 'success');
+                resetForm();
+            }
+            
+            // 在生成日曆前，再次清除快取確保使用最新資料
+            clearBookingsCache();
+            console.log('準備重新生成日曆...');
+            await generateCalendar();
+            console.log('日曆重新生成完成');
+            updateConflictDisplay();
+        });
+
+        // 監聽表單變更以更新撞期顯示
+        ['bookingDate', 'room'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', updateConflictDisplay);
+            }
+        });
+
+        document.querySelectorAll('input[name="time"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateConflictDisplay);
+        });
+
+        // 監聽日期按鈕選擇變化
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('date-btn')) {
+                updateConflictDisplay();
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 載入保存的月份（必須先載入，才能知道要顯示哪個月份）
+            loadSavedMonth();
+            
+            // 根據當前顯示的月份設定預設日期
+            updateDefaultBookingDate();
+            
+            // 檢查月份解鎖狀態
+            checkMonthUnlock();
+            
+            // 強制清除快取，確保載入最新資料
+            clearBookingsCache();
+            console.log('初始化：清除快取，準備載入所有預約資料');
+            
+            // 載入假期資料（異步，不阻塞月曆生成）
+            loadHolidaysFromSheet().then(async () => {
+                // 如果月曆已經生成，重新生成以顯示假期
+                if (document.querySelector('.calendar-grid')) {
+                    await generateCalendar();
+                }
+            });
+            
+            // 生成日曆（會自動從 API 載入所有預約資料）
+            await generateCalendar();
+            
+            // 測試：檢查預約格式（僅用於調試）
+            const testBookings = await getBookings();
+            const jan4Test = testBookings.filter(b => {
+                const d = b.date ? String(b.date) : '';
+                return d.includes('2026-01-04') || d === '2026-01-04';
+            });
+            if (jan4Test.length > 0) {
+                console.log('🧪 測試：2026-01-04 的預約格式:', jan4Test.map(b => ({
+                    date: b.date,
+                    dateType: typeof b.date,
+                    time: b.time,
+                    timeType: typeof b.time,
+                    room: b.room,
+                    program: b.program
+                })));
+            }
+            
+            // 監聽星期選擇變化
+            document.getElementById('weekday').addEventListener('change', generateDateButtons);
+            
+            // 監聽節目名稱輸入變化
+            document.getElementById('program').addEventListener('input', updateProgramColorPreview);
+            
+            // 測試 InstantDB 連線（僅用於調試）
+            if (INSTANTDB_ENABLED && db) {
+                console.log('🧪 測試 InstantDB 連線...');
+                console.log('🧪 db 物件:', db);
+                console.log('🧪 db 可用方法:', Object.keys(db));
+                
+                // 測試查詢
+                setTimeout(async () => {
+                    try {
+                        if (db.query) {
+                            const testResult = await db.query({ REC_RESERVE_DB: {} });
+                            console.log('🧪 測試查詢結果:', testResult);
+                        } else if (db.useQuery) {
+                            const { data } = db.useQuery({ REC_RESERVE_DB: {} });
+                            console.log('🧪 測試 useQuery 結果:', data);
+                        } else {
+                            console.warn('🧪 InstantDB query API 未找到，可能需要調整');
+                        }
+                    } catch (error) {
+                        console.error('🧪 InstantDB 測試查詢失敗:', error);
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
